@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Isoflow } from 'fossflow';
 import { flattenCollections } from '@isoflow/isopacks/dist/utils';
 import isoflowIsopack from '@isoflow/isopacks/dist/isoflow';
@@ -10,6 +10,7 @@ import { DiagramData, mergeDiagramData, extractSavableData } from './diagramUtil
 import { StorageManager } from './StorageManager';
 import './App.css';
 
+// Define icons outside component to prevent recreating on every render
 const icons = flattenCollections([
   isoflowIsopack,
   awsIsopack,
@@ -238,7 +239,7 @@ function App() {
     }
   };
 
-  const handleModelUpdated = (model: any) => {
+  const handleModelUpdated = useCallback((model: any) => {
     // Store the current model state whenever it updates
     // Model update received
     
@@ -246,24 +247,31 @@ function App() {
     // This handles both complete and partial updates
     setCurrentModel((prevModel: DiagramData | null) => {
       const merged = {
-        // Start with previous model or diagram data
-        ...(prevModel || diagramData),
+        // Start with previous model or initial state
+        ...(prevModel || {
+          title: 'Untitled Diagram',
+          icons: icons,
+          colors: defaultColors,
+          items: [],
+          views: [],
+          fitToScreen: true
+        }),
         // Override with any new data from the model update
         ...model,
         // Ensure we always have required fields
-        title: model.title || prevModel?.title || diagramData.title || diagramName || 'Untitled',
+        title: model.title || prevModel?.title || diagramName || 'Untitled',
         // Keep icons in the data structure for FossFLOW to work
         icons: icons, // Always use full icon set
-        colors: model.colors || prevModel?.colors || diagramData.colors || [],
+        colors: model.colors || prevModel?.colors || defaultColors,
         // These fields likely come from the model update
-        items: model.items !== undefined ? model.items : (prevModel?.items || diagramData.items || []),
-        views: model.views !== undefined ? model.views : (prevModel?.views || diagramData.views || []),
+        items: model.items !== undefined ? model.items : (prevModel?.items || []),
+        views: model.views !== undefined ? model.views : (prevModel?.views || []),
         fitToScreen: true
       };
       setHasUnsavedChanges(true);
       return merged;
     });
-  };
+  }, [diagramName]);
 
   const exportDiagram = () => {
     // For export, DO include icons so the file is self-contained
@@ -444,7 +452,7 @@ function App() {
       <div className="fossflow-container">
         <Isoflow 
           key={fossflowKey}
-          initialData={diagramData}
+          initialData={currentModel || diagramData}
           onModelUpdated={handleModelUpdated}
           editorMode="EDITABLE"
         />
