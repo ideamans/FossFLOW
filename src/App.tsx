@@ -43,6 +43,7 @@ function App() {
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [lastAutoSave, setLastAutoSave] = useState<Date | null>(null);
   const [showStorageManager, setShowStorageManager] = useState(false);
+  const [showGrid, setShowGrid] = useState(true); // Grid visibility state
   
   // Initialize with empty diagram data
   // Create default colors for connectors
@@ -440,6 +441,16 @@ function App() {
         >
           Quick Save (Session)
         </button>
+        <button 
+          onClick={() => setShowGrid(!showGrid)}
+          style={{ 
+            backgroundColor: showGrid ? '#17a2b8' : '#6c757d',
+            marginLeft: '10px'
+          }}
+          title={showGrid ? 'Hide grid' : 'Show grid'}
+        >
+          {showGrid ? '◻ Grid ON' : '◼ Grid OFF'}
+        </button>
         <span className="current-diagram">
           {currentDiagram ? `Current: ${currentDiagram.name}` : diagramName || 'Untitled Diagram'}
           {hasUnsavedChanges && <span style={{ color: '#ff9800', marginLeft: '10px' }}>• Modified</span>}
@@ -455,6 +466,11 @@ function App() {
           initialData={currentModel || diagramData}
           onModelUpdated={handleModelUpdated}
           editorMode="EDITABLE"
+          mainMenuOptions={['EXPORT.JSON', 'EXPORT.PNG', 'ACTION.CLEAR_CANVAS']}
+          renderer={{
+            showGrid: showGrid,
+            backgroundColor: '#ffffff'
+          }}
         />
       </div>
 
